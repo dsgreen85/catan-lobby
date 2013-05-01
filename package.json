@@ -2,7 +2,7 @@
   "name": "catan-lobby",
   "version": "0.0.0",
   "description": "Server lobby for catan",
-  "main": "app.js",
+  "main": "lobby.js",
   "dependencies": {
     "socket.io": "~0.9.14"
   },
