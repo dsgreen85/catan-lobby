@@ -1,6 +1,6 @@
 <script src="js/socket.io/socket.io.js"></script>
 <script>
-	var main = io.connect('http://localhost:8001/chat')
+	var main = io.connect('http://localhost:8001/main')
 		, game_list = io.connect('http://localhost:8001/game-list');
 	
 	game_list.on('all-games', function(data) {
