@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script src="js/lib/jquery-1.7.2.js"></script>
+		<script src="js/lib/handlebars.js"></script>
+		<script src="js/lobby.js"></script>
+		<script id="template-game_list" type="text/x-handlebars-template">
+			<div>
+				<h1>Games</h1>
+				{{#unless games}}
+				None :(<br>
+				{{/unless}}
+				{{#each games}}
+					{{> game}}
+				{{/each}}
+				<input type="text" id="input_game_name">
+				<button class="create">Create</button>
+			</div>
+		</script>
+		<script id="template-game" type="text/x-handlebars-template">
+			<div>
+				<h2>{{name}}</h2>
+				<button class="start" game_name="{{name}}">Start</button>
+				<button class="join" game_name="{{name}}">Join</button>
+			</div>
+		</script>
+	</head>
+	<body>
+		<div id="game_list">
+		</div>
+		<div class="overlay">
+		</div>
+	</body>
+</html>

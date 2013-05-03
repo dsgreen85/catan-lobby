@@ -8,6 +8,7 @@ import requests
 import json
 
 from simpleauth import generate_token
+import settings
 
 class Session(object):
 	pass
@@ -22,10 +23,14 @@ class User(object):
 		self.icon = 'human'
 		self.ready = False
 		self.game = None
+		self.game_token = None
 		self.connection = None
 
 	def __eq__(self, other):
 		return self.id == other.id
+
+	def send(self, *args, **kwargs):
+		return self.connection.send(*args, **kwargs)
 
 class Guest(User):
 	def __init__(self):
@@ -40,6 +45,7 @@ class Game(object):
 		self.name = name
 		self.creator = creator
 		self.max_players = max_players
+		self.players = []
 
 		self.add_player(creator)
 		creator.ready = True
@@ -89,6 +95,12 @@ class RequestHandler(tornado.web.RequestHandler):
 			self.set_status(400)
 			self.error('Not connected')
 
+class Heartbeat(tornado.web.RequestHandler):
+	def post(self):
+		self.user = get_user(self)
+		user = self.user
+		if user.game_token is not None:
+			self.set_cookie('game-token', user.game_token)
 
 class Create(RequestHandler):
 	def post(self):
@@ -96,7 +108,7 @@ class Create(RequestHandler):
 
 		user = self.user
 		name = self.get_argument('name')
-		max_players = self.get_argument('max_players')
+		max_players = int(self.get_argument('max_players'))
 
 		game = Game(name, user, max_players)
 
@@ -116,7 +128,7 @@ class Join(RequestHandler):
 		name = self.get_argument('name')
 
 		if name not in games:
-			self.error('Game doesn\'t exist')
+			self.error('Game does not exist')
 
 		game = games[name]
 		game.add_player(user)
@@ -138,9 +150,10 @@ class Start(RequestHandler):
 			user.game_token = generate_token()
 
 		res = requests.post(
-			'{game_host}/create'.format(game_host='http://localhost:8080'),
+			'{game_host}/create'.format(game_host=settings.game_host),
 			data={
-				'token': 'fja4hu35mt7tv',
+				'secret': settings.game_secret,
+				'name': game.name,
 				'players': json.dumps([{
 					'name': user.name,
 					'icon': user.icon,
@@ -151,10 +164,11 @@ class Start(RequestHandler):
 
 		if res.status_code != 200:
 			self.error(res.text)
+			return
 
 		game_info = {
 			'name': game.name,
-			'host': 'http://localhost:8080',
+			'host': settings.game_host,
 		}
 
 		for user in game.players:
@@ -162,7 +176,6 @@ class Start(RequestHandler):
 				'type': 'game_start',
 				'game': game_info
 			})
-			user.connection.set_cookie('game-token', user.game_token)
 
 class Ready(RequestHandler):
 	def post(self):
@@ -183,8 +196,35 @@ class Unready(RequestHandler):
 
 class Socket(tornado.websocket.WebSocketHandler):
 	def open(self):
-		self.user = get_user(self)
+		try:
+			self.user = get_user(self)
+		except Exception:
+			self.send({
+				'type': 'error',
+				'error': {
+					'type': 'Unauthorized',
+					'error': 'You must have a session cookie',
+				}
+			})
+			self.close()
+			return
+
 		self.user.connection = self
+
+		global games
+		self.send({
+			'type': 'all_games',
+			'games': [{
+				'name': game.name
+			} for game in games.values()],
+		})
+
+		self.send({
+			'type': 'user',
+			'user': {
+				'name': self.user.name
+			}
+		})
 
 	def send(self, msg):
 		self.write_message(json.dumps(msg))

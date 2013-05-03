@@ -12,7 +12,10 @@ app = tornado.web.Application([
 	(r'/ready', handlers.Ready),
 	(r'/unready', handlers.Ready),
 	(r'/start', handlers.Start),
+	(r'/heartbeat', handlers.Heartbeat),
 	(r'/socket', handlers.Socket),
+	(r'/()',tornado.web.StaticFileHandler, {'path': '../client/index.html'}),
+	(r'/(.*)',tornado.web.StaticFileHandler, {'path': '../client'}),
 ])
 
 if __name__ == '__main__':
