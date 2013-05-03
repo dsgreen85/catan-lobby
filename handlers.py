@@ -134,11 +134,18 @@ class Start(RequestHandler):
 		if not game.all_ready():
 			self.error('Players are not ready')
 
+		for user in game.players:
+			user.game_token = generate_token()
+
 		res = requests.post(
 			'{game_host}/create'.format(game_host='http://localhost:8080'),
 			data={
 				'token': 'fja4hu35mt7tv',
-				'players': []
+				'players': json.dumps([{
+					'name': user.name,
+					'icon': user.icon,
+					'token': user.game_token
+				} for user in game.players])
 			}
 		)
 
@@ -155,6 +162,7 @@ class Start(RequestHandler):
 				'type': 'game_start',
 				'game': game_info
 			})
+			user.connection.set_cookie('game-token', user.game_token)
 
 class Ready(RequestHandler):
 	def post(self):
