@@ -45,12 +45,24 @@
 
 	$("button.create").live("click", function() {
 		var game_name = $("#input_game_name").val();
+		var max_players = $("#select_max_players").val();
 		$.ajax({
 			url: "create",
 			type: "POST",
 			data: {
 				"name": game_name,
-				"max_players": 1
+				"max_players": max_players
+			}
+		});
+	});
+
+	$("button.join").live("click", function() {
+		var game_name = $(this).attr("game_name");
+		$.ajax({
+			url: "join",
+			type: "POST",
+			data: {
+				"name": game_name
 			}
 		});
 	});

@@ -1,34 +1,89 @@
 <!DOCTYPE html>
 <html>
 	<head>
+		<link href="css/bootstrap.css" rel="stylesheet">
+		<link href="css/bootstrap-responsive.css" rel="stylesheet">
+		<link href="css/lobby.css" rel="stylesheet">
+		<link href="css/magnific-popup.css" rel="stylesheet">
+		<style>
+			body {
+				padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
+			}
+		</style>
 		<script src="js/lib/jquery-1.7.2.js"></script>
 		<script src="js/lib/handlebars.js"></script>
+		<script src="js/lib/magnific-popup.js"></script>
 		<script src="js/lobby.js"></script>
 		<script id="template-game_list" type="text/x-handlebars-template">
-			<div>
-				<h1>Games</h1>
-				{{#unless games}}
-				None :(<br>
-				{{/unless}}
-				{{#each games}}
-					{{> game}}
-				{{/each}}
-				<input type="text" id="input_game_name">
-				<button class="create">Create</button>
+			<div class="games-section">
+				<h1>Current Games</h1>
+				<div class="games-box">
+					{{#unless games}}
+					No games<br>
+					{{/unless}}
+					{{#each games}}
+						{{> game}}
+					{{/each}}
+					<div class="create-game">
+						<input type="text" id="input_game_name">
+						<select id="select_max_players">
+							<option value="1">1</option>
+							<option value="2">2</option>
+							<option value="3">3</option>
+							<option value="4">4</option>
+						</select>
+						<button class="create">Create</button>
+					</div>
+				</div>
 			</div>
 		</script>
 		<script id="template-game" type="text/x-handlebars-template">
-			<div>
-				<h2>{{name}}</h2>
+			<div class="game">
+				<h2>{{name}} {{players.length}}/{{max_players}}</h2>
+				{{#each players}}
+				<ul>
+					<li>{{name}}
+					</li>
+				</ul>
+				{{/each}}
+
+				{{#if is_owner}}
 				<button class="start" game_name="{{name}}">Start</button>
+				{{/if}}
+				{{#unless in_game}}
 				<button class="join" game_name="{{name}}">Join</button>
+				{{/unless}}
 			</div>
 		</script>
 	</head>
 	<body>
-		<div id="game_list">
+		<div class="navbar navbar-inverse navbar-fixed-top">
+			<div class="navbar-inner">
+			<div class="container">
+				<button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+				</button>
+				<a class="brand" href="#">Catan</a>
+				<div class="nav-collapse collapse">
+				<ul class="nav">
+					<li class="active"><a href="#">Home</a></li>
+					<li><a href="#about">About</a></li>
+					<li><a href="#contact">Contact</a></li>
+				</ul>
+				</div><!--/.nav-collapse -->
+			</div>
+			</div>
 		</div>
-		<div class="overlay">
+		<div class="container">
+			<div id="game_list">
+			</div>
+			<div class="overlay">
+			</div>
+			<div class="html-code">
+				<a class="popup-gmaps" href="http://localhost:8000">Open Game</a>
+			</div>
 		</div>
 	</body>
 </html>

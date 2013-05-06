@@ -62,6 +62,18 @@ class Game(object):
 	def all_ready(self):
 		return min(user.ready for user in self.players)
 
+	def as_dict(self, player):
+		return {
+			"name": self.name,
+			"max_players": self.max_players,
+			"players": [{
+					"name": player.name
+				} for player in self.players],
+			"creator": self.creator.name,
+			"in_game": player in self.players,
+			"is_owner": player == self.creator
+		}
+
 def get_user(handler):
 	global session
 
@@ -120,6 +132,11 @@ class Create(RequestHandler):
 
 		games[name] = game
 
+		self.write({
+			"type": "success",
+			"game": game.as_dict(user)
+		})
+
 class Join(RequestHandler):
 	def post(self):
 		global games
@@ -145,6 +162,9 @@ class Start(RequestHandler):
 
 		if not game.all_ready():
 			self.error('Players are not ready')
+
+		if not len(game.players) == game.max_players:
+			self.error('Game is not full')
 
 		for user in game.players:
 			user.game_token = generate_token()
@@ -214,9 +234,7 @@ class Socket(tornado.websocket.WebSocketHandler):
 		global games
 		self.send({
 			'type': 'all_games',
-			'games': [{
-				'name': game.name
-			} for game in games.values()],
+			'games': [game.as_dict(self.user) for game in games.values()],
 		})
 
 		self.send({
