@@ -1,20 +1,48 @@
 
-.games-section {
-	h1 {
-		text-align: center;
-	}
+.box h2 {
+	text-align: center;
 }
 
 .games-box {
-	width: 50%;
-	margin-left: auto;
-	margin-right: auto;
 
-	background-color: lighten(red, 10%);
-	border: solid black 1px;
+	// background-color: lighten(red, 10%);
 
-	.game {
-		background-color: salmon;
-		border: solid black 1px;
+	table {
+		margin-left: auto;
+		margin-right: auto;
+		margin-top: 10px;
+		margin-bottom: 10px;
+		width: 90%;
+
+		th, td {
+			padding: 8px 0 8px 8px;
+			border-color: lighten(salmon, 15%);
+		}
+
+		tr {
+			border-color: lighten(salmon, 15%);
+		}
 	}
+}
+
+.current_game {
+	width: 40%;
+	float: left;
+	margin-right: 20px;
+	padding: 10px;
+}
+
+.game_list {
+	width: 50%;
+	float: left;
+	padding: 10px;
+}
+
+.box {
+	height: 100%;
+
+	display: inline-block;
+	border: solid black 1px;
+	// border-radius: 6px;
+	background-color: lighten(salmon, 25%);
 }
