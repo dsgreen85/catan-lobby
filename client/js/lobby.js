@@ -49,7 +49,7 @@
 							if( document.domain == 'localhost' ) {
 								addr += ':8000/';
 							} else {
-								addr += "/game";
+								addr += "/game/";
 							}
 							addr = prot + "//" + addr + "#" + Lobby.token;
 
