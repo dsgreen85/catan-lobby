@@ -1,10 +1,17 @@
 
+html, body {
+	overflow: hidden;
+}
+
 .box h2 {
 	text-align: center;
 }
 
-.games-box {
+.mfp-content {
+	max-width: 100% !important;
+}
 
+.games-box {
 	// background-color: lighten(red, 10%);
 
 	table {
@@ -30,12 +37,36 @@
 	float: left;
 	margin-right: 20px;
 	padding: 10px;
+
+	transition: all 1s ease-out;
+
+	&.started {
+		// float: none;
+		width: 80%;
+
+		.game_started {
+			display: inline-block;
+		}
+	}
+	.game_info {
+		display: inline-block;
+	}
+	.game_started {
+		display: none;
+	}
 }
 
 .game_list {
 	width: 50%;
 	float: left;
 	padding: 10px;
+
+	transition: all 1s ease-out;
+
+	&.not-shown {
+		position: relative;
+		left: 115%;
+	}
 }
 
 .box {

@@ -6,6 +6,7 @@ import tornado.websocket
 
 import requests
 import json
+import threading
 
 from simpleauth import generate_token
 import settings
@@ -25,6 +26,7 @@ class User(object):
 		self.game = None
 		self.game_token = None
 		self.connection = None
+		self.timeout = None
 
 	def __eq__(self, other):
 		return self.id == other.id
@@ -36,7 +38,7 @@ class Guest(User):
 	def __init__(self):
 		super().__init__()
 
-		self.id = generate_token(10)
+		self.id = generate_token(5)
 		self.name = 'guest-{id}'.format(id=self.id)
 		self.icon = 'guest'
 
@@ -46,6 +48,7 @@ class Game(object):
 		self.creator = creator
 		self.max_players = max_players
 		self.players = []
+		self.started = False
 
 		self.add_player(creator)
 		creator.ready = True
@@ -54,10 +57,33 @@ class Game(object):
 		if user in self.players:
 			return False
 
+		if len(self.players) >= self.max_players:
+			return False
+
 		self.players.append(user)
 		user.game = self
 		user.ready = False
+
+		user.send({
+			'type': 'current_game',
+			'game': self.as_dict(user)
+		})
+
 		return True
+
+	def remove_player(self, user):
+		if user not in self.players:
+			return
+
+		self.players.remove(user)
+		user.game = None
+
+		if not self.players:
+			global games
+			del games[self.name]
+
+		elif self.creator not in self.players:
+			self.creator = self.players[0]
 
 	def all_ready(self):
 		return min(user.ready for user in self.players)
@@ -91,6 +117,13 @@ def get_user(handler):
 
 	return user
 
+def update_games():
+	for user in session.values():
+		user.send({
+			"type": "all_games",
+			'games': [game.as_dict(user) for game in games.values()],
+		})
+
 class RequestHandler(tornado.web.RequestHandler):
 	def error(self, msg):
 		self.clear()
@@ -110,9 +143,6 @@ class RequestHandler(tornado.web.RequestHandler):
 class Heartbeat(tornado.web.RequestHandler):
 	def post(self):
 		self.user = get_user(self)
-		user = self.user
-		if user.game_token is not None:
-			self.set_cookie('game-token', user.game_token)
 
 class Create(RequestHandler):
 	def post(self):
@@ -137,6 +167,14 @@ class Create(RequestHandler):
 			"game": game.as_dict(user)
 		})
 
+		self.user.connection.send({
+			"type": "current_game",
+			"game": game.as_dict(user)
+		})
+
+		update_games()
+
+
 class Join(RequestHandler):
 	def post(self):
 		global games
@@ -147,8 +185,14 @@ class Join(RequestHandler):
 		if name not in games:
 			self.error('Game does not exist')
 
+		if user.game:
+			user.game.remove_player(user)
+
 		game = games[name]
 		game.add_player(user)
+
+		update_games()
+
 
 class Start(RequestHandler):
 	def post(self):
@@ -156,15 +200,19 @@ class Start(RequestHandler):
 		game = user.game
 		if game is None:
 			self.error('Not in game')
+			return
 
 		if game.creator is not user:
 			self.error('Not game owner')
+			return
 
 		if not game.all_ready():
 			self.error('Players are not ready')
+			return
 
 		if not len(game.players) == game.max_players:
 			self.error('Game is not full')
+			return
 
 		for user in game.players:
 			user.game_token = generate_token()
@@ -186,6 +234,7 @@ class Start(RequestHandler):
 			self.error(res.text)
 			return
 
+		game.started = True
 		game_info = {
 			'name': game.name,
 			'host': settings.game_host,
@@ -194,7 +243,8 @@ class Start(RequestHandler):
 		for user in game.players:
 			user.send({
 				'type': 'game_start',
-				'game': game_info
+				'game': game_info,
+				'token': user.game_token
 			})
 
 class Ready(RequestHandler):
@@ -229,6 +279,10 @@ class Socket(tornado.websocket.WebSocketHandler):
 			self.close()
 			return
 
+		if self.user.timeout:
+			self.user.timeout.cancel()
+			self.user.timeout = None
+
 		self.user.connection = self
 
 		global games
@@ -244,10 +298,33 @@ class Socket(tornado.websocket.WebSocketHandler):
 			}
 		})
 
+		if self.user.game:
+			self.send({
+				'type': 'current_game',
+				'game': self.user.game.as_dict(self.user)
+			})
+
 	def send(self, msg):
 		self.write_message(json.dumps(msg))
 
-	def close(self):
+	def on_close(self):
 		if self.user is not None:
 			self.user.connection = None
+
+			def disconnect(user):
+				print('Disconnecting', user.name)
+				user.timeout = None
+
+				if user.game:
+					if not user.game.started:
+						user.game.remove_player(user)
+						user.game = None
+						user.ready = False
+
+			if self.user.timeout:
+				self.user.timeout.cancel()
+
+			print('Connection closed')
+			self.user.timeout = threading.Timer(10, disconnect, [self.user])
+			self.user.timeout.start()
 

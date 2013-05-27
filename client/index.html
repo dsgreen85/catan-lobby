@@ -5,7 +5,6 @@
 		<link href="css/bootstrap-responsive.css" rel="stylesheet">
 		<link href="css/lobby.css" rel="stylesheet">
 		<link href="css/magnific-popup.css" rel="stylesheet">
-		<link href="css/bigbox.css" rel="stylesheet">
 		<style>
 			body {
 				padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
@@ -14,7 +13,6 @@
 		<script src="js/lib/jquery-1.7.2.js"></script>
 		<script src="js/lib/handlebars.js"></script>
 		<script src="js/lib/magnific-popup.js"></script>
-		<script src="js/lib/humane.js"></script>
 		<script src="js/lobby.js"></script>
 		<script id="template-game_list" type="text/x-handlebars-template">
 			<div class="games-section">
@@ -34,14 +32,16 @@
 							<td colspan="3">No games</td>
 							{{/unless}}
 							{{#each games}}
+							<tr>
 								<td>{{this.name}}</td>
-								<td>{{this.owner.name}}</td>
+								<td>{{this.creator}}</td>
 								<td>{{this.players.length}}/{{this.max_players}}</td>
 								<td>
 									{{#unless in_game}}
-									<button class="join" game_name="{{name}}">Join</button>
+									<button class="join btn btn-small btn-primary" game_name="{{name}}">Join</button>
 									{{/unless}}
 								</td>
+							</tr>
 							{{/each}}
 						</tbody>
 					</table>
@@ -49,7 +49,13 @@
 			</div>
 		</script>
 		<script id="template-current_game" type="text/x-handlebars-template">
-			{{#if in_game}}
+			{{#if game}}
+				<h2>{{game.name}}</h2>
+				{{#if game.is_owner}}
+				<button class="start btn btn-primary" game_name="{{name}}">Start</button>
+				{{else}}
+				<button class="ready btn btn-primary" game_name="{{name}}">Ready</button>
+				{{/if}}
 			{{else}}
 				<h2>Create Game</h2>
 				<p>Or select a game to join on the right</p>
@@ -62,7 +68,7 @@
 						<option value="3">3</option>
 						<option value="4">4</option>
 					</select>
-					<button class="create">Create</button>
+					<button class="create btn btn-primary">Create</button>
 				</form>
 			{{/if}}
 		</script>
@@ -90,14 +96,16 @@
 		<div class="container">
 			<div class="main_interface">
 				<div class="current_game box">
+					<div class="game_info">
+					</div>
+					<div class="game_started">
+						<button class="launch btn btn-primary">Launch</button>
+					</div>
 				</div>
 				<div class="game_list box">
 				</div>
 			</div>
 			<div class="overlay">
-			</div>
-			<div class="html-code">
-				<a class="popup-gmaps" href="http://localhost:8000">Open Game</a>
 			</div>
 		</div>
 	</body>

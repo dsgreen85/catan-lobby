@@ -1,7 +1,7 @@
 (function( Lobby, $, undefined ) {
 	"use strict";
 
-	var SOCKET;
+	var SOCKET;				
 
 	$(window).load(function() {
 		$.ajax({
@@ -25,6 +25,7 @@
 				SOCKET = new WebSocket(sockprot+"//"+sockaddr+document.location.pathname+"socket");
 
 				$('.overlay').text('Connecting');
+				$('.overlay').hide();
 
 				SOCKET.onopen = function(){
 					$('.overlay').text('Connected');
@@ -34,8 +35,26 @@
 					var msg = JSON.parse(msg.data);
 
 					if( msg.type == "all_games" ) {
-						$("#game_list").html(Lobby.template({
+						$(".game_list").html(Lobby.template.game_list({
 							games: msg.games
+						}));
+					} else if ( msg.type == "game_start" ) {
+						Lobby.token = msg.token;
+						$('.game_list').addClass('not-shown');
+						$('.current_game').delay(800).queue(function(next) {
+							$(this).addClass('started');
+							$("button.launch").magnificPopup({
+								items: {
+									src: "http://localhost:8000/#"+Lobby.token,
+									type: "iframe",
+									closeOnBgClick: false,
+								}
+							});
+							next();
+						});
+					} else if ( msg.type == "current_game" ) {
+						$(".game_info").html(Lobby.template.current_game({
+							game: msg.game
 						}));
 					}
 				};
@@ -54,6 +73,8 @@
 				"max_players": max_players
 			}
 		});
+
+		return false;
 	});
 
 	$("button.join").live("click", function() {
@@ -74,13 +95,22 @@
 		});
 	});
 
+	$("button.ready").live("click", function() {
+		$.ajax({
+			url: "ready",
+			type: "POST",
+		});
+	});
+
 	$(document).ready(function() {
-		Lobby.template = Handlebars.compile($("#template-game_list").html());
-		Handlebars.registerPartial("game", $("#template-game").html());
+		Lobby.template = {};
 
+		Lobby.template.game_list = Handlebars.compile($("#template-game_list").html());
+		Lobby.template.current_game = Handlebars.compile($("#template-current_game").html());
+		// Handlebars.registerPartial("game", $("#template-game").html());
 
-
-		$("#game_list").html(Lobby.template({}));
+		$(".game_list").html(Lobby.template.game_list({}));
+		$(".game_info").html(Lobby.template.current_game({}));
 	});
 
 
