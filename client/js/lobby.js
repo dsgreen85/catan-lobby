@@ -49,11 +49,7 @@
 							if( document.domain == 'localhost' ) {
 								addr += ':8000';
 							}
-							if (document.location.protocol === "https:") {
-								prot = "wss:";
-							}
-
-							var addr = prot + "//" + addr + "/#" + Lobby.token;
+							addr = prot + "//" + addr + "/#" + Lobby.token;
 
 							$("button.launch").magnificPopup({
 								items: {
