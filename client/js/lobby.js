@@ -43,9 +43,21 @@
 						$('.game_list').addClass('not-shown');
 						$('.current_game').delay(800).queue(function(next) {
 							$(this).addClass('started');
+
+							var addr = document.domain;
+							var prot = document.location.protocol;
+							if( document.domain == 'localhost' ) {
+								addr += ':8000';
+							}
+							if (document.location.protocol === "https:") {
+								prot = "wss:";
+							}
+
+							var addr = prot + "//" + addr + "/#" + Lobby.token;
+
 							$("button.launch").magnificPopup({
 								items: {
-									src: "http://localhost:8000/#"+Lobby.token,
+									src: addr,
 									type: "iframe",
 									closeOnBgClick: false,
 								}
