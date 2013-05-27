@@ -47,9 +47,11 @@
 							var addr = document.domain;
 							var prot = document.location.protocol;
 							if( document.domain == 'localhost' ) {
-								addr += ':8000';
+								addr += ':8000/';
+							} else {
+								addr += "/game";
 							}
-							addr = prot + "//" + addr + "/#" + Lobby.token;
+							addr = prot + "//" + addr + "#" + Lobby.token;
 
 							$("button.launch").magnificPopup({
 								items: {
